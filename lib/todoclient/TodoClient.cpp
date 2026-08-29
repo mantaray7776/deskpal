@@ -4,7 +4,7 @@
 #include <ArduinoJson.h>
 
 bool TodoClient::fetch(const char* token, const char* today_ymd,
-                        uint16_t& open_count, TodoItem* items, uint8_t max_items, uint8_t& item_count) {
+                        uint16_t& open_count, Item* items, uint8_t max_items, uint8_t& item_count) {
     open_count = 0;
     item_count = 0;
     if (!token || strlen(token) == 0) return false;

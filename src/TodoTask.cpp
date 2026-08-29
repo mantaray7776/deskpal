@@ -37,7 +37,7 @@ void TodoTask(void* pvParams) {
         }
 
         uint16_t open_count = 0;
-        TodoItem items[TODO_MAX_ITEMS];
+        TodoClient::Item items[TODO_MAX_ITEMS];
         uint8_t  count = 0;
         bool ok = s_todo.fetch(TODOIST_TOKEN, today, open_count, items, TODO_MAX_ITEMS, count);
 
@@ -47,7 +47,10 @@ void TodoTask(void* pvParams) {
             if (ok) {
                 g_state.todo.open_count = open_count;
                 g_state.todo.item_count = count;
-                for (uint8_t i = 0; i < count; i++) g_state.todo.items[i] = items[i];
+                for (uint8_t i = 0; i < count; i++) {
+                    strlcpy(g_state.todo.items[i].content, items[i].content, sizeof(g_state.todo.items[i].content));
+                    g_state.todo.items[i].overdue = items[i].overdue;
+                }
             }
         });
 

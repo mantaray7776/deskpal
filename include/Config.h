@@ -121,8 +121,8 @@
 #endif
 
 // ── Wi-Fi ────────────────────────────────────────────────────────────────────
-#define WIFI_SSID           "YOUR_SSID"
-#define WIFI_PASSWORD       "YOUR_PASSWORD"
+#define WIFI_SSID           "CIA Surveillance Van "  // your Wi-Fi SSID
+#define WIFI_PASSWORD       "manta24978372"
 #define MDNS_HOSTNAME       "deskmon"    // → deskmon.local
 #define WS_PORT             81
 

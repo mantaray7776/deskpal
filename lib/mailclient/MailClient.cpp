@@ -1,5 +1,4 @@
 #include "MailClient.h"
-#include "Config.h"
 
 String MailClient::nextTag() {
     char buf[8];
@@ -90,17 +89,18 @@ void MailClient::parseUnseenUids(const String& searchResponse, int* uids, int ma
 }
 
 bool MailClient::poll(const char* host, uint16_t port, const char* user, const char* pass,
-                       uint16_t& unread_count, Item* items, uint8_t max_items, uint8_t& item_count) {
+                       uint16_t& unread_count, Item* items, uint8_t max_items, uint8_t& item_count,
+                       uint32_t timeout_ms) {
     unread_count = 0;
     item_count   = 0;
 
     _client.setInsecure();
-    _client.setTimeout(MAIL_CONN_TIMEOUT_MS / 1000);
+    _client.setTimeout(timeout_ms / 1000);
     if (!_client.connect(host, port)) return false;
 
     // Server greeting ("* OK ...") — read and discard.
     String greeting;
-    if (!readLine(greeting, MAIL_CONN_TIMEOUT_MS) || !greeting.startsWith("*")) {
+    if (!readLine(greeting, timeout_ms) || !greeting.startsWith("*")) {
         _client.stop();
         return false;
     }
@@ -108,13 +108,13 @@ bool MailClient::poll(const char* host, uint16_t port, const char* user, const c
     // LOGIN
     String resp;
     String loginCmd = "LOGIN \"" + String(user) + "\" \"" + String(pass) + "\"";
-    if (!command(loginCmd, resp, MAIL_CONN_TIMEOUT_MS)) {
+    if (!command(loginCmd, resp, timeout_ms)) {
         _client.stop();
         return false;
     }
 
     // STATUS INBOX (UNSEEN) — works without SELECTing first.
-    if (command("STATUS INBOX (UNSEEN)", resp, MAIL_CONN_TIMEOUT_MS)) {
+    if (command("STATUS INBOX (UNSEEN)", resp, timeout_ms)) {
         int idx = resp.indexOf("UNSEEN");
         if (idx >= 0) {
             int p = idx + 6;
@@ -127,9 +127,9 @@ bool MailClient::poll(const char* host, uint16_t port, const char* user, const c
 
     if (unread_count > 0 && max_items > 0) {
         // SELECT INBOX (needed for UID SEARCH / UID FETCH)
-        if (command("SELECT INBOX", resp, MAIL_CONN_TIMEOUT_MS)) {
+        if (command("SELECT INBOX", resp, timeout_ms)) {
             // UID SEARCH UNSEEN
-            if (command("UID SEARCH UNSEEN", resp, MAIL_CONN_TIMEOUT_MS)) {
+            if (command("UID SEARCH UNSEEN", resp, timeout_ms)) {
                 int uids[32];
                 int uidCount = 0;
                 parseUnseenUids(resp, uids, 32, uidCount);
@@ -141,7 +141,7 @@ bool MailClient::poll(const char* host, uint16_t port, const char* user, const c
                     String fetchCmd = "UID FETCH " + String(uids[i]) +
                                        " (BODY.PEEK[HEADER.FIELDS (FROM SUBJECT)])";
                     String fetchResp;
-                    if (!command(fetchCmd, fetchResp, MAIL_CONN_TIMEOUT_MS)) continue;
+                    if (!command(fetchCmd, fetchResp, timeout_ms)) continue;
 
                     String from    = extractHeaderField(fetchResp, "From");
                     String subject = extractHeaderField(fetchResp, "Subject");

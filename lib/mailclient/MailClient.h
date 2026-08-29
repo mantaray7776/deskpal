@@ -27,8 +27,12 @@ public:
     // Connects, logs in, checks INBOX, and (if unread > 0) fetches headers for
     // up to max_items of the most recent unread messages. Always disconnects
     // before returning. Returns false on any connection/login/protocol error.
+    // timeout_ms: caller-supplied network timeout (pass MAIL_CONN_TIMEOUT_MS
+    // from Config.h) — kept as a parameter rather than read here directly so
+    // this library has zero dependency on the project's Config.h.
     bool poll(const char* host, uint16_t port, const char* user, const char* pass,
-              uint16_t& unread_count, Item* items, uint8_t max_items, uint8_t& item_count);
+              uint16_t& unread_count, Item* items, uint8_t max_items, uint8_t& item_count,
+              uint32_t timeout_ms = 8000);
 
 private:
     WiFiClientSecure _client;
