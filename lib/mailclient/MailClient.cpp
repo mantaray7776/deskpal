@@ -95,12 +95,16 @@ bool MailClient::poll(const char* host, uint16_t port, const char* user, const c
     item_count   = 0;
 
     _client.setInsecure();
-    _client.setTimeout(timeout_ms / 1000);
-    if (!_client.connect(host, port)) return false;
+    if (!_client.connect(host, port)) {
+        log_w("MailClient: TCP/TLS connect to %s:%u failed", host, (unsigned)port);
+        return false;
+    }
+    _client.setTimeout(timeout_ms / 1000); // socket exists now — safe to set
 
     // Server greeting ("* OK ...") — read and discard.
     String greeting;
     if (!readLine(greeting, timeout_ms) || !greeting.startsWith("*")) {
+        log_w("MailClient: no/bad greeting: \"%s\"", greeting.c_str());
         _client.stop();
         return false;
     }
@@ -109,6 +113,7 @@ bool MailClient::poll(const char* host, uint16_t port, const char* user, const c
     String resp;
     String loginCmd = "LOGIN \"" + String(user) + "\" \"" + String(pass) + "\"";
     if (!command(loginCmd, resp, timeout_ms)) {
+        log_w("MailClient: LOGIN failed, server said: \"%s\"", resp.c_str());
         _client.stop();
         return false;
     }

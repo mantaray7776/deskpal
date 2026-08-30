@@ -121,8 +121,8 @@
 #endif
 
 // ── Wi-Fi ────────────────────────────────────────────────────────────────────
-#define WIFI_SSID           "CIA Surveillance Van "  // your Wi-Fi SSID
-#define WIFI_PASSWORD       "manta24978372"
+#define WIFI_SSID           "tplink 2.4g"  // your Wi-Fi SSID
+#define WIFI_PASSWORD       "sahand2356"
 #define MDNS_HOSTNAME       "deskmon"    // → deskmon.local
 #define WS_PORT             81
 
@@ -166,10 +166,10 @@
 #define IMAP_PORT           993
 #endif
 #ifndef IMAP_USER
-#define IMAP_USER           "you@example.com"
+#define IMAP_USER           "s.kh.250@gmail.com"
 #endif
 #ifndef IMAP_PASS
-#define IMAP_PASS           "your-app-password"
+#define IMAP_PASS           "rfvu etxd hnlj lxwv "
 #endif
 #define MAIL_CHECK_INTERVAL_SEC   60
 #define MAIL_CONN_TIMEOUT_MS      8000
@@ -178,7 +178,7 @@
 // Google Calendar: Settings → your calendar → "Secret address in iCal format".
 // Any plain-HTTPS .ics URL works (Outlook, Fastmail, etc. all publish one).
 #ifndef CALENDAR_ICS_URL
-#define CALENDAR_ICS_URL    ""     // leave blank to disable
+#define CALENDAR_ICS_URL    "https://calendar.google.com/calendar/ical/s.kh.250gto%40gmail.com/private-fbce2fbce9ec9a442e2d3b276dbb59ed/basic.ics"     // leave blank to disable
 #endif
 #define CALENDAR_CHECK_INTERVAL_SEC  300
 #define CALENDAR_SOON_MIN            10     // "meeting soon" suggestion threshold
