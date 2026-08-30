@@ -33,8 +33,8 @@ bool suggestion_init() {
 void suggestion_offer(SuggestionType type, const char* text, uint32_t ttl_sec) {
     if (type == SuggestionType::NONE) return;
 
-    NavState st = state_snapshot();
-    if (st.suggestion.active) return; // don't clobber one the user hasn't answered yet
+    SuggestionState sug = suggestion_snapshot();
+    if (sug.active) return; // don't clobber one the user hasn't answered yet
 
     uint8_t  idx = type_index(type);
     uint32_t now = millis();
@@ -55,9 +55,9 @@ void suggestion_offer(SuggestionType type, const char* text, uint32_t ttl_sec) {
 }
 
 void suggestion_accept() {
-    NavState st = state_snapshot();
-    if (!st.suggestion.active) return;
-    SuggestionType t = st.suggestion.type;
+    SuggestionState sug = suggestion_snapshot();
+    if (!sug.active) return;
+    SuggestionType t = sug.type;
 
     WITH_STATE([&]{ g_state.suggestion.active = false; });
     nav_log_event(EventType::SUGGESTION_ACCEPTED, (float)(uint8_t)t);
@@ -77,9 +77,9 @@ void suggestion_accept() {
 }
 
 void suggestion_dismiss() {
-    NavState st = state_snapshot();
-    if (!st.suggestion.active) return;
-    nav_log_event(EventType::SUGGESTION_DISMISSED, (float)(uint8_t)st.suggestion.type);
+    SuggestionState sug = suggestion_snapshot();
+    if (!sug.active) return;
+    nav_log_event(EventType::SUGGESTION_DISMISSED, (float)(uint8_t)sug.type);
     WITH_STATE([&]{ g_state.suggestion.active = false; });
 }
 
@@ -89,7 +89,8 @@ void SuggestionTask(void* pvParams) {
     uint32_t settle_sec = 0, break_sec = 0;
     uint32_t btn_down_since = 0;
     bool     btn_was_down = false;
-    uint8_t  tick_div = 0; // 20 ticks @ 50ms = 1 Hz for the slower logic below
+    uint8_t  tick_div = 0;   // 20 ticks @ 50ms = 1 Hz for the settle/break logic below
+    uint8_t  heap_div = 0;   // logs every 30 * 1Hz ticks = ~30s
 
     TickType_t last_wake = xTaskGetTickCount();
     for (;;) {
@@ -99,8 +100,8 @@ void SuggestionTask(void* pvParams) {
             btn_down_since = millis();
         } else if (!down && btn_was_down) {
             uint32_t held = millis() - btn_down_since;
-            NavState st = state_snapshot();
-            if (st.suggestion.active) {
+            SuggestionState sug = suggestion_snapshot();
+            if (sug.active) {
                 if (held >= SUGGEST_BTN_LONGPRESS_MS) suggestion_dismiss();
                 else                                  suggestion_accept();
             }
@@ -110,7 +111,23 @@ void SuggestionTask(void* pvParams) {
         // ── 1 Hz: expiry + settle/break timers ──
         if (++tick_div >= 20) {
             tick_div = 0;
-            NavState st = state_snapshot();
+
+            // Heap diagnostics — a steady decline here points to a leak;
+            // a sudden drop right before a crash points to a transient
+            // spike (e.g. overlapping network polls) rather than a leak.
+            if (++heap_div >= 30) {
+                heap_div = 0;
+                log_i("heap: free=%u min_ever=%u", (unsigned)ESP.getFreeHeap(),
+                      (unsigned)ESP.getMinFreeHeap());
+            }
+
+            // This block reads across motion/session/suggestion, so it
+            // genuinely needs the full snapshot — but now it's the ONLY
+            // full-struct copy live in this task, and nothing it calls
+            // (suggestion_offer, suggestion_accept, suggestion_dismiss)
+            // takes a second one on top of it.
+            NavState st;
+            state_snapshot(st);
 
             if (st.suggestion.active && st.suggestion.expires_ms &&
                 millis() > st.suggestion.expires_ms) {

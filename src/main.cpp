@@ -112,6 +112,9 @@ void setup() {
     g_state_mutex = xSemaphoreCreateMutex();
     configASSERT(g_state_mutex);
 
+    g_net_mutex = xSemaphoreCreateMutex();
+    configASSERT(g_net_mutex);
+
     g_state.session.session_duration = SESSION_DEFAULT_SEC;
     g_state.session.active = false;
 

@@ -20,10 +20,10 @@ static void load_prefs() {
 }
 
 static void save_prefs() {
-    NavState st = state_snapshot();
+    SessionState session = session_snapshot();
     s_prefs.begin("deskmon", false); // read-write
-    s_prefs.putUChar("pomo_count", st.session.pomodoro_count);
-    s_prefs.putUInt("sess_dur",    st.session.session_duration);
+    s_prefs.putUChar("pomo_count", session.pomodoro_count);
+    s_prefs.putUInt("sess_dur",    session.session_duration);
     s_prefs.end();
 }
 

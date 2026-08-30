@@ -197,6 +197,22 @@ struct NavState {
 extern NavState         g_state;
 extern SemaphoreHandle_t g_state_mutex;
 
+// Serializes network polling across MailTask/CalendarTask/TodoTask so at
+// most one TLS connection (WiFiClientSecure) is ever live at a time. Each of
+// those tasks independently opens a fairly heavy TLS session; letting two or
+// three overlap was a plausible cause of RAM exhaustion / crash-reboots on
+// this board (TFT framebuffer + ML model + Wi-Fi stack already use a lot of
+// the available RAM). Long timeout (most of a poll cycle) since a legitimate
+// IMAP/HTTP round trip can itself take several seconds.
+extern SemaphoreHandle_t g_net_mutex;
+
+#define WITH_NET_LOCK(timeout_ms, ...) do { \
+    if (g_net_mutex != NULL && xSemaphoreTake(g_net_mutex, pdMS_TO_TICKS(timeout_ms)) == pdTRUE) { \
+        __VA_ARGS__(); \
+        xSemaphoreGive(g_net_mutex); \
+    } \
+} while(0)
+
 // Helper: acquire mutex, run lambda, release
 // Usage:  WITH_STATE([&]{ g_state.session.active = true; });
 // include/NavState.h
@@ -208,14 +224,44 @@ extern SemaphoreHandle_t g_state_mutex;
     } \
 } while(0)
 
-// Safe snapshot for tasks that need a consistent read
-inline NavState state_snapshot() {
-    NavState snap;
-    if (xSemaphoreTake(g_state_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-        snap = g_state;
+// Safe snapshot for tasks that need a consistent read of the WHOLE struct.
+// Use only when you actually touch fields across multiple sub-structs
+// (DisplayTask, WebTask, SuggestionTask's main loop). For anything narrower,
+// use the accessors below — they cost a few bytes of stack instead of
+// sizeof(NavState) (2172 bytes), and are safe to nest/call from small-stack
+// tasks without risking a stack-canary overflow.
+inline void state_snapshot(NavState& out) {
+    if (g_state_mutex != NULL && xSemaphoreTake(g_state_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+        out = g_state;
         xSemaphoreGive(g_state_mutex);
     }
-    return snap;
+}
+
+inline SuggestionState suggestion_snapshot() {
+    SuggestionState s{};
+    if (g_state_mutex != NULL && xSemaphoreTake(g_state_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+        s = g_state.suggestion;
+        xSemaphoreGive(g_state_mutex);
+    }
+    return s;
+}
+
+inline SessionState session_snapshot() {
+    SessionState s{};
+    if (g_state_mutex != NULL && xSemaphoreTake(g_state_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+        s = g_state.session;
+        xSemaphoreGive(g_state_mutex);
+    }
+    return s;
+}
+
+inline MotionState motion_snapshot() {
+    MotionState s{};
+    if (g_state_mutex != NULL && xSemaphoreTake(g_state_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+        s = g_state.motion;
+        xSemaphoreGive(g_state_mutex);
+    }
+    return s;
 }
 
 void nav_log_event(EventType type, float value = 0.0f);

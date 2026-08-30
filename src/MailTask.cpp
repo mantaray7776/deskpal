@@ -37,8 +37,11 @@ void MailTask(void* pvParams) {
         MailClient::Item items[MAIL_MAX_ITEMS];
         uint8_t count = 0;
 
-        bool ok = s_mail.poll(IMAP_HOST, IMAP_PORT, IMAP_USER, IMAP_PASS,
-                               unread, items, MAIL_MAX_ITEMS, count, MAIL_CONN_TIMEOUT_MS);
+        bool ok = false;
+        WITH_NET_LOCK(30000, [&]{
+            ok = s_mail.poll(IMAP_HOST, IMAP_PORT, IMAP_USER, IMAP_PASS,
+                              unread, items, MAIL_MAX_ITEMS, count, MAIL_CONN_TIMEOUT_MS);
+        });
 
         WITH_STATE([&]{
             g_state.mail.connected     = ok;

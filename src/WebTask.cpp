@@ -737,9 +737,10 @@ void WebTask(void* pvParams) {
         s_http.handleClient();
         s_ws.loop();
 
-        if (xTaskGetTickCount() - last_bcast >= pdMS_TO_TICKS(100)) {
+                if (xTaskGetTickCount() - last_bcast >= pdMS_TO_TICKS(100)) {
             last_bcast = xTaskGetTickCount();
-            NavState st = state_snapshot();
+            NavState st;
+            state_snapshot(st);
             if (st.wifi.ws_clients > 0) {
                 String payload = build_state_json(st);
                 s_ws.broadcastTXT(payload);

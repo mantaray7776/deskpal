@@ -39,7 +39,10 @@ void TodoTask(void* pvParams) {
         uint16_t open_count = 0;
         TodoClient::Item items[TODO_MAX_ITEMS];
         uint8_t  count = 0;
-        bool ok = s_todo.fetch(TODOIST_TOKEN, today, open_count, items, TODO_MAX_ITEMS, count);
+        bool ok = false;
+        WITH_NET_LOCK(30000, [&]{
+            ok = s_todo.fetch(TODOIST_TOKEN, today, open_count, items, TODO_MAX_ITEMS, count);
+        });
 
         WITH_STATE([&]{
             g_state.todo.connected     = ok;

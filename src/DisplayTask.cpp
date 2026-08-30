@@ -309,7 +309,8 @@ bool display_init() {
 
 void DisplayTask(void* pvParams) {
     for (;;) {
-        NavState st = state_snapshot();
+        NavState st;
+        state_snapshot(st);
 
         canvas.fillScreen(C_BG);
         draw_statusbar(st);

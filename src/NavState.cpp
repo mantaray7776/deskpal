@@ -7,6 +7,7 @@
 
 NavState          g_state  = {};
 SemaphoreHandle_t g_state_mutex = nullptr;
+SemaphoreHandle_t g_net_mutex   = nullptr;
 
 void nav_log_event(EventType type, float value) {
     if (!g_state_mutex) return;

@@ -39,8 +39,11 @@ void CalendarTask(void* pvParams) {
         if (now > 100000) { // sane epoch => NTP has synced
             char summary[48];
             uint32_t start_epoch = 0;
-            bool ok = s_cal.fetchNextEvent(CALENDAR_ICS_URL, (uint32_t)now,
-                                            summary, sizeof(summary), start_epoch);
+            bool ok = false;
+            WITH_NET_LOCK(30000, [&]{
+                ok = s_cal.fetchNextEvent(CALENDAR_ICS_URL, (uint32_t)now,
+                                           summary, sizeof(summary), start_epoch);
+            });
 
             WITH_STATE([&]{
                 g_state.calendar.connected      = ok;

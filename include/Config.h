@@ -140,8 +140,8 @@
 #define STACK_SENSOR        4096
 #define STACK_DISPLAY       6144
 #define STACK_WEB           8192
-#define STACK_DISTRACT      3072
-#define STACK_SESSION       2048
+#define STACK_DISTRACT      4096
+#define STACK_SESSION       4096
 
 #define PRI_SENSOR          5           // highest — real-time sensor fusion
 #define PRI_DISPLAY         3
@@ -212,7 +212,7 @@
 #define STACK_MAIL          8192   // TLS needs a decent stack
 #define STACK_CALENDAR      8192
 #define STACK_TODO          6144
-#define STACK_SUGGEST       3072
+#define STACK_SUGGEST       6144   
 
 #define PRI_MAIL            1
 #define PRI_CALENDAR        1
