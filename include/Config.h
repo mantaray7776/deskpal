@@ -123,7 +123,7 @@
 // ── Wi-Fi ────────────────────────────────────────────────────────────────────
 #define WIFI_SSID           "tplink 2.4g"  // your Wi-Fi SSID
 #define WIFI_PASSWORD       "sahand2356"
-#define MDNS_HOSTNAME       "deskmon"    // → deskmon.local
+#define MDNS_HOSTNAME       "deskmon"    // → *.local
 #define WS_PORT             81
 
 // ── Session defaults ─────────────────────────────────────────────────────────
